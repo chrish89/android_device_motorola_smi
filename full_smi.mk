@@ -31,6 +31,6 @@ $(call inherit-product, device/motorola/smi/device.mk)
 # Set those variables here to overwrite the inherited values.
 PRODUCT_DEVICE := smi
 PRODUCT_NAME := full_smi
-PRODUCT_BRAND := Motorola
-PRODUCT_MODEL := XT890
-PRODUCT_MANUFACTURER := Motorola
+PRODUCT_BRAND := RETAIL
+PRODUCT_MODEL := RAZR I
+PRODUCT_MANUFACTURER := MOTO

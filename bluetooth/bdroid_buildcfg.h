@@ -20,4 +20,11 @@
 
 #define BTM_DEF_LOCAL_NAME   "Motorola Razr I"
 
+#define BTA_GATT_INCLUDED TRUE
+#define BLE_INCLUDED TRUE
+#define ATT_INCLUDED TRUE
+#define GATT_CLIENT_ENABLED
+#define SMP_INCLUDED TRUE
+#define GAP_INCLUDED TRUE
+
 #endif

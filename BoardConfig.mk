@@ -14,21 +14,27 @@ TARGET_ARCH := x86
 TARGET_ARCH_VARIANT := x86-atom
 TARGET_ARCH_VARIANT_FPU := sse
 TARGET_BOARD_PLATFORM := sc1
-TARGET_CPU_SMP := true
+#TARGET_CPU_SMP := true
 
 # Atom optimizations to improve memory benchmarks.
 -include $(LOCAL_PATH)/OptAtom.mk
 
-# Connectivity - Wi-Fi
-USES_TI_MAC80211 := true
-
-WPA_SUPPLICANT_VERSION := VER_0_8_X_TI
-BOARD_WPA_SUPPLICANT_DRIVER := NL80211
+# Wifi related defines
+USES_TI_MAC80211                 := true
+BOARD_WPA_SUPPLICANT_DRIVER      := NL80211
+# Required for newer wpa_supplicant_8 versions to fix tethering
+BOARD_WIFI_SKIP_CAPABILITIES     := true
+WPA_SUPPLICANT_VERSION           := VER_0_8_X
+# Private libs for the non-TI wpa_supplicant
+BOARD_HOSTAPD_PRIVATE_LIB        := lib_driver_cmd_wl12xx
 BOARD_WPA_SUPPLICANT_PRIVATE_LIB := lib_driver_cmd_wl12xx
-BOARD_WLAN_DEVICE := wl12xx_mac80211
-BOARD_HOSTAPD_DRIVER := NL80211
-BOARD_HOSTAPD_PRIVATE_LIB := lib_driver_cmd_wl12xx
-COMMON_GLOBAL_CFLAGS += -DUSES_TI_MAC80211
+BOARD_HOSTAPD_DRIVER             := NL80211
+BOARD_WLAN_DEVICE                := wl12xx_mac80211
+BOARD_SOFTAP_DEVICE              := wl12xx_mac80211
+#WIFI_DRIVER_MODULE_PATH          := "/system/lib/modules/wl12xx_sdio.ko"
+#WIFI_DRIVER_MODULE_NAME          := "wl12xx_sdio"
+#WIFI_FIRMWARE_LOADER             := ""
+COMMON_GLOBAL_CFLAGS             += -DUSES_TI_MAC80211
 
 TARGET_MODULES_SOURCE := "hardware/ti/wlan/mac80211/compat_wl12xx"
 
@@ -71,13 +77,11 @@ BOARD_KERNEL_CMDLINE := init=/init pci=noearly console=logk0 vmalloc=260046848 e
 BOARD_VOLD_EMMC_SHARES_DEV_MAJOR := true
 BOARD_VOLD_DISC_HAS_MULTIPLE_MAJORS := true
 BOARD_VOLD_MAX_PARTITIONS := 20
-BOARD_HAS_LARGE_FILESYSTEM := true
 TARGET_USERIMAGES_USE_EXT4 := true
 BOARD_BOOTIMAGE_PARTITION_SIZE := 11534336 # 0x00b00000
 BOARD_SYSTEMIMAGE_PARTITION_SIZE := 1263255552
 BOARD_USERDATAIMAGE_PARTITION_SIZE := 5643771904
 BOARD_FLASH_BLOCK_SIZE := 2048
-TARGET_USE_CUSTOM_LUN_FILE_PATH := "/sys/devices/virtual/android_usb/android0/f_mass_storage/lun%d/file"
 
 BOARD_DATA_DEVICE                       := /dev/block/mmcblk0p17
 BOARD_DATA_FILESYSTEM                   := ext4
@@ -97,15 +101,21 @@ BOARD_BLUETOOTH_BDROID_BUILDCFG_INCLUDE_DIR := $(LOCAL_PATH)/bluetooth
 # Audio
 BOARD_USES_ALSA_AUDIO := true
 BOARD_USES_TINY_ALSA_AUDIO := true
+TARGET_RELEASE_CPPFLAGS += -DNEEDS_VECTORIMPL_SYMBOLS
+
+# enable ARM codegen for x86 with Houdini
+BUILD_ARM_FOR_X86 := true
+
+# Needed for blobs 4.2+
+COMMON_GLOBAL_CFLAGS += -DNEEDS_VECTORIMPL_SYMBOLS
 
 # Graphics
 USE_OPENGL_RENDERER	:= true
-BOARD_EGL_CFG := $(LOCAL_PATH)/prebuilt/lib/egl/egl.cfg
+BOARD_EGL_CFG := $(LOCAL_PATH)/config/egl.cfg
 BOARD_USES_HWCOMPOSER := true
 BOARD_ALLOW_EGL_HIBERNATION := true
 BOARD_EGL_WORKAROUND_BUG_10194508 := true
 TARGET_RUNNING_WITHOUT_SYNC_FRAMEWORK := true
-BOARD_EGL_WORKAROUND_BUG_10194508 := true
 
 ENABLE_IMG_GRAPHICS := true
 BUILD_WITH_FULL_STAGEFRIGHT := true
@@ -114,24 +124,31 @@ BOARD_USES_WRS_OMXIL_CORE := true
 BOARD_USES_MRST_OMX := true
 USE_INTEL_SECURE_AVC := true
 
-# Enable WEBGL in WebKit
-ENABLE_WEBGL := true
-TARGET_FORCE_CPU_UPLOAD := true
-
-# RILD
-RIL_SUPPORTS_SEEK := true
-
 # GPS
 BOARD_HAVE_GPS := true
 
 # skip doc from building
 BOARD_SKIP_ANDROID_DOC_BUILD := true
 
+# Bootanimation
+TARGET_BOOTANIMATION_PRELOAD := true
+
+# Use dlmalloc
+MALLOC_IMPL := dlmalloc
+
+# Security
+BUILD_WITH_SECURITY_FRAMEWORK := chaabi_token
+BUILD_WITH_CHAABI_SUPPORT := true
+
+# RMT_STORAGE
+# BOARD_USES_LEGACY_MMAP := true
+
+# Include an expanded selection of fonts
+EXTENDED_FONT_FOOTPRINT := true
+
 # Recovery configuration global
 TARGET_RECOVERY_PIXEL_FORMAT := "BGRA_8888"
-BOARD_HAS_NO_SELECT_BUTTON := true
 TARGET_RECOVERY_FSTAB := $(LOCAL_PATH)/rootdir/etc/fstab.sc1
-BOARD_RECOVERY_SWIPE := true
 BOARD_UMS_LUNFILE := "/sys/devices/virtual/android_usb/android0/f_mass_storage/lun%d/file"
 TARGET_PREBUILT_RECOVERY_KERNEL := $(LOCAL_PATH)/boottools/image/bzImage
 BOARD_SUPPRESS_EMMC_WIPE := true
@@ -154,10 +171,25 @@ HAVE_SELINUX := true
 
 # SELinux
 BOARD_SEPOLICY_DIRS += \
-    device/motorola/smi/sepolicy
+	device/motorola/smi/sepolicy
 
 BOARD_SEPOLICY_UNION += \
-    file_contexts \
-    domain.te \
-    init_shell.te \
-    netd.te
+	akmd8963.te \
+	batt_health.te \
+	bd_prov.te \
+	bluetooth.te \
+	bootanim.te \
+	enable_houdini.te \
+	file.te \
+	init.te \
+	locdrv.te \
+	mediaserver.te \
+	mmgr.te \
+	pvrsrvctl.te \
+	rild.te \
+	surfaceflinger.te \
+	system_server.te \
+	ueventd.te \
+	uim_sysfs.te \
+	watchdogd.te \
+	zygote.te
